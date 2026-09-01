@@ -1049,16 +1049,3 @@ mysqladmin -u root -p ping
 # Redis connectivity
 redis-cli PING
 ```
-
-## 🤝 Contributing
-
-See `CONTRIBUTING.md` for guidelines on submitting issues, pull requests, and code review processes.
-
-## 📄 License
-
-This project is proprietary software. All rights reserved.
-
----
-
-**Built for scale, designed for reliability, engineered for performance.** 🚀
->>>>>>> 5f04500a71df8e7de3cf40decb6e4cbcb8dec319
