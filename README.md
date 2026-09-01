@@ -27,17 +27,17 @@ The platform implements a **layered caching strategy** that prioritizes speed wh
                               │
                               ▼
         ┌─────────────────────────────────────┐
-        │         Business Logic Layer         │
-        │  (Controllers + Utils + Validators)   │
+        │         Business Logic Layer        │
+        │  (Controllers + Utils + Validators) │
         └─────────────────────────────────────┘
                               │
               ┌───────────────┴──────────────┐
-              ▼                               ▼
+              ▼                              ▼
     ┌──────────────┐              ┌──────────────┐
     │ Redis Cache  │              │  MySQL DB    │
-    │ (Primary)    │◄─────────────│ │ (Fallback)  │
-    │              │  Conditional   │ │             │
-    └──────────────┘  Query Only    └──────────────┘
+    │ (Primary)    │◄─────────────│ (Fallback)   │
+    │              │  Conditional │              │
+    └──────────────┘  Query Only  └──────────────┘
            │                           ▲
            │                           │
            ▼                           │
