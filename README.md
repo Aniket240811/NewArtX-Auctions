@@ -27,17 +27,17 @@ The platform implements a **layered caching strategy** that prioritizes speed wh
                               │
                               ▼
         ┌─────────────────────────────────────┐
-        │         Business Logic Layer         │
-        │  (Controllers + Utils + Validators)   │
+        │         Business Logic Layer        │
+        │  (Controllers + Utils + Validators) │
         └─────────────────────────────────────┘
                               │
               ┌───────────────┴──────────────┐
-              ▼                               ▼
+              ▼                              ▼
     ┌──────────────┐              ┌──────────────┐
     │ Redis Cache  │              │  MySQL DB    │
-    │ (Primary)    │◄─────────────│ │ (Fallback)  │
-    │              │  Conditional   │ │             │
-    └──────────────┘  Query Only    └──────────────┘
+    │ (Primary)    │◄─────────────│ (Fallback)   │
+    │              │  Conditional │              │
+    └──────────────┘  Query Only  └──────────────┘
            │                           ▲
            │                           │
            ▼                           │
@@ -981,4 +981,84 @@ pm2 logs auction-service
 
 # Monitor performance
 pm2 monit
+<<<<<<< HEAD
 ```
+=======
+```
+
+## 🛡️ Security Considerations
+
+### Input Validation
+- ✅ All inputs validated via schema validators
+- ✅ SQL injection prevention via parameterized queries
+- ✅ Amount range validation (decimal precision)
+- ✅ User ID type enforcement
+
+### Network Security
+- ✅ HTTPS recommended for production
+- ✅ Rate limiting recommended for public endpoints
+- ✅ Request size limits to prevent DoS attacks
+- ✅ IP whitelisting support available
+
+### Data Protection
+- ✅ Passwords never logged
+- ✅ Sensitive data masked in logs
+- ✅ Database encryption at rest
+- ✅ Redis authentication configured
+
+## 🔧 Troubleshooting
+
+### Common Issues
+
+**1. "Redis WRONGTYPE Operation"**
+- **Cause**: Redis key holds wrong data type
+- **Fix**: Clear Redis cache: `redis-cli FLUSHDB`
+
+**2. "Database connection timeout"**
+- **Cause**: Connection pool exhausted
+- **Fix**: Increase `pool.max` or check connection leaks
+
+**3. "Port 3000 already in use"**
+- **Cause**: Previous server instance running
+- **Fix**: Kill process: `lsof -ti:3000 | xargs kill -9`
+
+**4. Tests failing with 500 errors**
+- **Cause**: Server-side database transaction issues
+- **Fix**: Check MySQL/Redis connectivity, see server logs for details
+
+## 📈 Monitoring & Metrics
+
+### Key Performance Indicators
+
+- **Request Rate**: Bids processed per second
+- **Response Times**: P50, P95, P99 latencies
+- **Cache Hit Rate**: Redis cache effectiveness
+- **Error Rate**: Failed requests percentage
+- **Database Connections**: Active/inactive connections
+- **Redis Memory Usage**: Memory consumption and eviction rate
+
+### Health Checks
+
+```bash
+# Server health check
+curl http://localhost:3000/
+
+# Database connectivity
+mysqladmin -u root -p ping
+
+# Redis connectivity
+redis-cli PING
+```
+
+## 🤝 Contributing
+
+See `CONTRIBUTING.md` for guidelines on submitting issues, pull requests, and code review processes.
+
+## 📄 License
+
+This project is proprietary software. All rights reserved.
+
+---
+
+**Built for scale, designed for reliability, engineered for performance.** 🚀
+>>>>>>> 5f04500a71df8e7de3cf40decb6e4cbcb8dec319
