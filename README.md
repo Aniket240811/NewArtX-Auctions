@@ -609,6 +609,300 @@ npm test --verbose
 npm test --stop-on-failure
 ```
 
+### API Documentation
+
+#### POST /bid - Place a New Bid
+
+Submit a new bid for an active auction. This endpoint implements idempotency, concurrency control, and comprehensive bid validation.
+
+**Endpoint:** `POST /bid`  
+**Content-Type:** `application/json`
+
+**Request Parameters:**
+
+| Parameter | Type | Required | Description | Validation Rules |
+|-----------|------|----------|-------------|------------------|
+| `auction_id` | number | ✅ Yes | Unique auction identifier | Positive integer |
+| `user_id` | number | ✅ Yes | Unique user identifier | Positive integer |
+| `amount` | number | ✅ Yes | Bid amount | Positive number, max 4 decimal places |
+| `request_id` | string | ❌ No | Unique idempotency key | Prevents duplicate processing |
+
+**Example Request:**
+```bash
+curl -X POST http://localhost:3000/bid \
+  -H "Content-Type: application/json" \
+  -d '{
+    "auction_id": 12345,
+    "user_id": 98765,
+    "amount": "1500.00",
+    "request_id": "unique_request_123"
+  }'
+```
+
+**Success Responses:**
+
+**1. 201 Created - New Bid Placed**
+```json
+{
+  "success": true,
+  "message": "Bid placed successfully",
+  "data": {
+    "auction_id": 12345,
+    "user_id": 98765,
+    "amount": "1500.00",
+    "request_id": "unique_request_123"
+  }
+}
+```
+
+**2. 200 OK - Network Retry (Idempotent)**
+```json
+{
+  "success": true,
+  "message": "Bid already processed (network retry)",
+  "data": {
+    "auction_id": 12345,
+    "user_id": 98765,
+    "amount": "1500.00",
+    "request_id": "unique_request_123"
+  }
+}
+```
+
+**Error Responses:**
+
+**1. 400 Bad Request - Validation Errors**
+```json
+{
+  "success": false,
+  "error_code": "ERR_VALIDATION",
+  "message": "Validation failed",
+  "errors": [
+    "auction_id is required",
+    "amount must be positive"
+  ],
+  "stack": "Error details..."
+}
+```
+
+**2. 400 Bad Request - Bid Too Low**
+```json
+{
+  "success": false,
+  "error_code": "ERR_BID_TOO_LOW",
+  "message": "Bid must be strictly higher than current top bid",
+  "stack": "Error details..."
+}
+```
+
+**3. 400 Bad Request - Auction Closed**
+```json
+{
+  "success": false,
+  "error_code": "ERR_AUCTION_CLOSED",
+  "message": "Auction is closed",
+  "stack": "Error details..."
+}
+```
+
+**4. 400 Bad Request - Already Top Bidder**
+```json
+{
+  "success": false,
+  "error_code": "ERR_ALREADY_TOP_BIDDER",
+  "message": "You are already the top bidder",
+  "stack": "Error details..."
+}
+```
+
+**5. 400 Bad Request - Invalid Amount**
+```json
+{
+  "success": false,
+  "error_code": "ERR_INVALID_AMOUNT",
+  "message": "Bid amount must be greater than starting price",
+  "stack": "Error details..."
+}
+```
+
+**6. 404 Not Found - Auction Not Found**
+```json
+{
+  "success": false,
+  "error_code": "ERR_AUCTION_NOT_FOUND",
+  "message": "Auction not found",
+  "stack": "Error details..."
+}
+```
+
+**7. 409 Conflict - Concurrency Issue**
+```json
+{
+  "success": false,
+  "error_code": "ERR_CONCURRENCY",
+  "message": "Concurrency collision, please retry",
+  "stack": "Error details..."
+}
+```
+
+**8. 415 Unsupported Media Type**
+```json
+{
+  "success": false,
+  "error_code": "ERR_VALIDATION",
+  "message": "Content-Type must be application/json",
+  "stack": "Error details..."
+}
+```
+
+**9. 500 Internal Server Error - System Error**
+```json
+{
+  "success": false,
+  "error_code": "ERR_SYSTEM",
+  "message": "Internal server error",
+  "stack": "Full error stack trace..."
+}
+```
+
+---
+
+#### GET /bid - Retrieve Bids with Filters
+
+Retrieve bids from the system with optional filtering capabilities. All parameters are optional.
+
+**Endpoint:** `GET /bid`  
+**Content-Type:** `application/json`
+
+**Query Parameters:**
+
+| Parameter | Type | Required | Description | Validation Rules |
+|-----------|------|----------|-------------|------------------|
+| `auction_id` | number | ❌ No | Filter by auction ID | Positive integer |
+| `user_id` | number | ❌ No | Filter by user ID | Positive integer |
+| `min_amount` | number | ❌ No | Minimum bid amount | Positive number, max 4 decimal places |
+| `max_amount` | number | ❌ No | Maximum bid amount | Positive number, max 4 decimal places |
+
+**Example Requests:**
+
+**1. Get All Bids:**
+```bash
+curl http://localhost:3000/bid
+```
+
+**2. Filter by Auction:**
+```bash
+curl "http://localhost:3000/bid?auction_id=12345"
+```
+
+**3. Filter by User:**
+```bash
+curl "http://localhost:3000/bid?user_id=98765"
+```
+
+**4. Filter by Amount Range:**
+```bash
+curl "http://localhost:3000/bid?min_amount=1000.00&max_amount=5000.00"
+```
+
+**5. Combined Filters:**
+```bash
+curl "http://localhost:3000/bid?auction_id=12345&user_id=98765&min_amount=1000.00"
+```
+
+**Success Response: 200 OK**
+```json
+{
+  "success": true,
+  "message": "Bids retrieved successfully",
+  "data": {
+    "count": 3,
+    "bids": [
+      {
+        "id": 1,
+        "auction_id": 12345,
+        "user_id": 98765,
+        "amount": "2500.00",
+        "request_id": "req_abc123",
+        "created_at": "2026-09-01T15:30:45.123Z"
+      },
+      {
+        "id": 2,
+        "auction_id": 12345,
+        "user_id": 67890,
+        "amount": "2000.00",
+        "request_id": "req_def456",
+        "created_at": "2026-09-01T15:25:30.456Z"
+      },
+      {
+        "id": 3,
+        "auction_id": 12345,
+        "user_id": 54321,
+        "amount": "1500.00",
+        "request_id": "req_ghi789",
+        "created_at": "2026-09-01T15:20:15.789Z"
+      }
+    ]
+  }
+}
+```
+
+**Empty Result Response: 200 OK**
+```json
+{
+  "success": true,
+  "message": "Bids retrieved successfully",
+  "data": {
+    "count": 0,
+    "bids": []
+  }
+}
+```
+
+**Error Responses:**
+
+**1. 400 Bad Request - Validation Errors**
+```json
+{
+  "success": false,
+  "error_code": "ERR_VALIDATION",
+  "message": "Validation failed",
+  "errors": [
+    "auction_id must be a number",
+    "min_amount must be positive"
+  ],
+  "stack": "Error details..."
+}
+```
+
+**2. 500 Internal Server Error - System Error**
+```json
+{
+  "success": false,
+  "error_code": "ERR_SYSTEM",
+  "message": "Internal server error",
+  "stack": "Full error stack trace..."
+}
+```
+
+---
+
+### Error Codes Reference
+
+| Error Code | HTTP Status | Description | Retry Recommended |
+|------------|-------------|-------------|------------------|
+| `ERR_VALIDATION` | 400 | Request schema validation failed | ❌ No - Fix request format |
+| `ERR_INVALID_AMOUNT` | 400 | Amount below starting price | ❌ No - Increase amount |
+| `ERR_AUCTION_CLOSED` | 400 | Auction has ended | ❌ No - Cannot bid on closed auctions |
+| `ERR_AUCTION_NOT_FOUND` | 404 | Auction doesn't exist | ❌ No - Verify auction ID |
+| `ERR_BID_TOO_LOW` | 400 | Bid not higher than current top bid | ❌ No - Increase amount |
+| `ERR_ALREADY_TOP_BIDDER` | 400 | User already has top bid | ❌ No - Wait for competition |
+| `ERR_CONCURRENCY` | 409 | Concurrent update collision | ✅ Yes - Retry immediately |
+| `ERR_NETWORK_RETRY` | 400 | Duplicate request detected | ✅ Yes - Use same request_id |
+| `ERR_SYSTEM` | 500 | Internal server error | ✅ Yes - Retry with backoff |
+| `ERR_DATABASE` | 500 | Database operation failed | ✅ Yes - Retry with backoff |
+| `ERR_REDIS` | 500 | Redis operation failed | ✅ Yes - Retry with backoff |
+
 ### API Usage
 
 **Place a Bid:**
@@ -688,79 +982,3 @@ pm2 logs auction-service
 # Monitor performance
 pm2 monit
 ```
-
-## 🛡️ Security Considerations
-
-### Input Validation
-- ✅ All inputs validated via schema validators
-- ✅ SQL injection prevention via parameterized queries
-- ✅ Amount range validation (decimal precision)
-- ✅ User ID type enforcement
-
-### Network Security
-- ✅ HTTPS recommended for production
-- ✅ Rate limiting recommended for public endpoints
-- ✅ Request size limits to prevent DoS attacks
-- ✅ IP whitelisting support available
-
-### Data Protection
-- ✅ Passwords never logged
-- ✅ Sensitive data masked in logs
-- ✅ Database encryption at rest
-- ✅ Redis authentication configured
-
-## 🔧 Troubleshooting
-
-### Common Issues
-
-**1. "Redis WRONGTYPE Operation"**
-- **Cause**: Redis key holds wrong data type
-- **Fix**: Clear Redis cache: `redis-cli FLUSHDB`
-
-**2. "Database connection timeout"**
-- **Cause**: Connection pool exhausted
-- **Fix**: Increase `pool.max` or check connection leaks
-
-**3. "Port 3000 already in use"**
-- **Cause**: Previous server instance running
-- **Fix**: Kill process: `lsof -ti:3000 | xargs kill -9`
-
-**4. Tests failing with 500 errors**
-- **Cause**: Server-side database transaction issues
-- **Fix**: Check MySQL/Redis connectivity, see server logs for details
-
-## 📈 Monitoring & Metrics
-
-### Key Performance Indicators
-
-- **Request Rate**: Bids processed per second
-- **Response Times**: P50, P95, P99 latencies
-- **Cache Hit Rate**: Redis cache effectiveness
-- **Error Rate**: Failed requests percentage
-- **Database Connections**: Active/inactive connections
-- **Redis Memory Usage**: Memory consumption and eviction rate
-
-### Health Checks
-
-```bash
-# Server health check
-curl http://localhost:3000/
-
-# Database connectivity
-mysqladmin -u root -p ping
-
-# Redis connectivity
-redis-cli PING
-```
-
-## 🤝 Contributing
-
-See `CONTRIBUTING.md` for guidelines on submitting issues, pull requests, and code review processes.
-
-## 📄 License
-
-This project is proprietary software. All rights reserved.
-
----
-
-**Built for scale, designed for reliability, engineered for performance.** 🚀
