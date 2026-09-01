@@ -1,0 +1,28 @@
+{
+  "name": "newartx",
+  "version": "1.0.0",
+  "description": "",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "setup-db": "node scripts/setup_database.js",
+    "test": "node tests/run-tests.js all",
+    "test:unit": "node tests/run-tests.js unit",
+    "test:integration": "node tests/run-tests.js integration",
+    "test:logic": "node tests/run-tests.js logic",
+    "test:resilience": "node tests/run-tests.js resilience",
+    "test:watch": "nodemon --watch src --watch tests --exec 'node tests/run-tests.js all'",
+    "test:verbose": "node tests/run-tests.js all --verbose"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "dotenv": "^17.4.2",
+    "joi": "^18.2.5",
+    "mysql2": "^3.24.2",
+    "redis": "^6.2.1",
+    "sequelize": "^6.37.8"
+  }
+}

@@ -1,0 +1,14 @@
+CREATE USER 'NewArtX_r'@'localhost' IDENTIFIED BY 'NewArtX123read';
+GRANT SELECT ON newartx.* TO 'NewArtX_r'@'localhost';
+
+-- 2. Create the Read-Write user (For POST calls)
+CREATE USER 'NewArtX_rw'@'localhost' IDENTIFIED BY 'NewArtX123readwrite';
+GRANT SELECT, INSERT, UPDATE, DELETE ON newartx.* TO 'NewArtX_rw'@'localhost';
+
+-- 3. Apply the permissions
+FLUSH PRIVILEGES;
+
+
+## redis
+ACL SETUSER NewArtX_rw on >NewArtX123read ~* +@all
+ACL SAVE
